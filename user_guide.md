@@ -54,7 +54,7 @@
 
 1.  **获取Gemini API Key**:
 
-    访问Google AI Studio (https://ai.google.dev/) 并获取您的API Key。
+    访问Google AI Studio (https://aistudio.google.com/) 并获取您的API Key。
 
 2.  **配置环境变量**:
 
