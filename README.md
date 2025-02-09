@@ -9,12 +9,13 @@
 主要更改：
 1. 接入Gemini并更改相关兼容性代码
 2. 在utils增加独立medical_splitter.py模块，设计专用于医学教材的文本分块
-3. 将向量数据库从Chroma更改为更适合医学教科书的大体量数据的Milvus，并使用docker进行部署
-4. 优化pdf_loader.py中的RAG框架
-5. 优化chat_agent.py中的相应模块以及prompt，使其更加符合教学
-6. 将main.py中的流式输出删除，便于大体量文本的高效输出。
-7. 加入了CUDA，默认使用GPU加速，否则使用CPU
-8. 优化了各种奇奇怪怪的东西
+3. 将embedding模型改为MTEB leaderboard中文排名第二的的TencentBAC/Conan-embedding-v1
+4. 将向量数据库从Chroma更改为更适合医学教科书的大体量数据的Milvus，并使用docker进行部署
+5. 优化pdf_loader.py中的RAG框架
+6. 优化chat_agent.py中的相应模块以及prompt，使其更加符合教学
+7. 将main.py中的流式输出删除，便于大体量文本的高效输出。
+8. 加入了CUDA，默认使用GPU加速，否则使用CPU
+9. 优化了各种奇奇怪怪的东西
 
 ## 2. 环境要求
 
