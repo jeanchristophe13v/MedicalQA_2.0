@@ -8,6 +8,7 @@ from typing import List, Dict, Any
 from langchain.memory import ConversationBufferMemory
 from utils.pdf_loader import load_pdfs
 from langchain_huggingface import HuggingFaceEmbeddings
+import torch
 
 load_dotenv()
 jieba.setLogLevel(logging.WARNING)
@@ -46,9 +47,10 @@ class ChatAgent:
         self.max_history = 10
 
         # 初始化embedding模型
+        device = "cuda" if torch.cuda.is_available() else "cpu"
         self.embeddings = HuggingFaceEmbeddings(
             model_name="TencentBAC/Conan-embedding-v1",
-            model_kwargs={'device': 'cpu'},
+            model_kwargs={'device': device},
             encode_kwargs={'normalize_embeddings': True},
             cache_folder="./embeddings_cache"
         )

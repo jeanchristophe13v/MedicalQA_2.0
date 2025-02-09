@@ -23,7 +23,7 @@ def load_pdfs(pdf_dir):
     print("开始加载embedding模型...")
     embeddings = HuggingFaceEmbeddings(
         model_name="TencentBAC/Conan-embedding-v1",
-        model_kwargs={'device': 'cpu'},
+        model_kwargs={'device': 'cuda'},
         encode_kwargs={'normalize_embeddings': True},
         cache_folder="./embeddings_cache"
     )
@@ -103,8 +103,9 @@ def load_pdfs(pdf_dir):
         print("创建索引...")
         index_params = {
             "metric_type": "L2",
-            "index_type": "IVF_FLAT",
-            "params": {"nlist": 1024}
+            "index_type": "IVF_PQ",
+            "params": {"nlist": 1024, "m": 16},
+            "device": "cuda"
         }
         collection.create_index("embedding", index_params)
         collection.load()
