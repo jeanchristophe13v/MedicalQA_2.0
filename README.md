@@ -9,7 +9,7 @@
 主要更改：
 1. 接入Gemini并更改相关兼容性代码
 2. 在utils增加独立medical_splitter.py模块，设计专用于医学教材的文本分块
-3. 将向量数据库从Chroma更改为更适合医学教科书的大体量数据的Milvus
+3. 将向量数据库从Chroma更改为更适合医学教科书的大体量数据的Milvus，并使用docker进行部署
 4. 优化pdf_loader.py中的RAG框架
 5. 优化chat_agent.py中的相应模块以及prompt，使其更加符合教学
 6. 将main.py中的流式输出删除，便于大体量文本的高效输出。
