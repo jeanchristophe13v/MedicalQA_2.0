@@ -1,0 +1,34 @@
+# 环境变量
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 虚拟环境
+venv2/
+env/
+
+# VS Code
+.vscode/
+
+# 数据和缓存目录
+data/
+embeddings_cache/
+chroma_db/
+volumes/
+
+# 数据库/缓存文件
+af3bb73a4158ae8c4872740ec2a547363b0cc49075a64a15dfac1048af0b5cf2
+*.wal
+*.sst
+
+# 库文件
+*.lib
+
+# 动态链接库文件
+*.dll
+
+# 临时文件/分片文件
+part.*
