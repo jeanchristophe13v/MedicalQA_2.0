@@ -13,7 +13,8 @@
 4. 优化pdf_loader.py中的RAG框架
 5. 优化chat_agent.py中的相应模块以及prompt，使其更加符合教学
 6. 将main.py中的流式输出删除，便于大体量文本的高效输出。
-7. 优化了各种奇奇怪怪的东西
+7. 加入了CUDA，默认使用GPU加速，否则使用CPU
+8. 优化了各种奇奇怪怪的东西
 
 ## 2. 环境要求
 
@@ -103,6 +104,7 @@
 ## 6. 注意事项
 
 *   PDF文件的处理和向量化可能需要较长时间，请耐心等待。
+*   若要使用CUDA，请在官网先下载cuda toolkit v12.8后使用`pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126`下载pytorch (cuda12.6即可适配）
 *   如果程序运行过程中出现错误，请仔细阅读错误信息，并根据提示进行操作。
 *   建议定期检查`requirements.txt`文件，并使用`pip install -r requirements.txt --upgrade`更新依赖。
 *   Milvus默认监听`localhost:19530`端口。
@@ -110,4 +112,6 @@
 ## 7. 高级配置 (可选)
 
 *   **自定义文本分割策略**: 您可以通过修改`utils/text_splitter/medical_splitter.py`文件中的`AdaptiveMedicalSplitter`类来自定义文本分割策略。
+*   **自定义embedding模型**：您可以通过修改`utils/pdf_loader.py`文件中的`model_names`来更改来自huggingface上的embedding模型。
 *   **自定义Prompt**: 您可以通过修改`chat_agent.py`文件中的`prompt`变量来自定义提问模板。
+*   **自定义llm**：您可以通过修改`chat_agent.py`文件中的`self_model`模块修改接入的llm。
