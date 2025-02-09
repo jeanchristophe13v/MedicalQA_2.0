@@ -29,7 +29,7 @@
 
     ```bash
     git clone (仓库地址)  # 将 (仓库地址) 替换为实际的项目仓库地址
-    cd medicalQA_large-gte-zh
+    cd medicalQA-2.0
     ```
 
 2.  **创建并激活虚拟环境**:
