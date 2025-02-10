@@ -44,7 +44,14 @@
     pip install -r requirements.txt
     ```
     如果安装过程中出现错误, 可以尝试使用`pip install -r requirements.txt --force-reinstall` 强制重新安装
-
+    
+5. **安装pytorch（可选）**
+    根据cuda toolkit版本进行安装，选择最接近版本的pytorch
+    ```bash
+    python -m pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
+    ```
+    
+    
 ## 4. 配置
 
 ### 4.1 Milvus配置
