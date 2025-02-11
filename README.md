@@ -97,8 +97,14 @@
 
     确保您已经激活了`venv2`虚拟环境，然后在项目根目录下执行以下命令：
 
+    1. `python main.py`默认加载data文件夹中的所有pdf文件
     ```bash
     venv2/Scripts/python main.py
+    ```
+
+    2. `python main.py [指定文件.pdf]`可以加载指定pdf文件
+    ```bash
+    venv2/Scripts/python main.py [指定文件.pdf]
     ```
 
 2.  **与程序交互**:
@@ -112,7 +118,7 @@
 ## 6. 注意事项
 
 *   PDF文件的处理和向量化可能需要较长时间，请耐心等待。
-*   若要使用CUDA，请在官网先下载cuda toolkit v12.8后使用`pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126`下载pytorch (cuda12.6即可适配）
+*   若要使用CUDA，请在官网先下载cuda toolkit v12.8后使用`pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126`下载pytorch （cuda12.6即可适配）
 *   如果程序运行过程中出现错误，请仔细阅读错误信息，并根据提示进行操作。
 *   建议定期检查`requirements.txt`文件，并使用`pip install -r requirements.txt --upgrade`更新依赖。
 *   Milvus默认监听`localhost:19530`端口。
