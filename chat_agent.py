@@ -6,15 +6,23 @@ import re
 import logging
 from typing import List, Dict, Any
 from langchain.memory import ConversationBufferMemory
-from utils.pdf_loader import load_pdfs
+from utils.pdf_loader import load_pdfs, init_milvus_collection
 from langchain_huggingface import HuggingFaceEmbeddings
 import torch
+from pymilvus import Collection, utility, connections
 
 load_dotenv()
 jieba.setLogLevel(logging.WARNING)
 
 class ChatAgent:
     def __init__(self, pdf_dir):
+        # 首先确保 Milvus 连接已建立
+        try:
+            connections.connect("default", host="localhost", port="19530")
+        except Exception as e:
+            print("正在连接 Milvus 服务器...")
+            connections.connect("default", host="localhost", port="19530")
+
         # Gemini API 配置
         api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
@@ -25,7 +33,7 @@ class ChatAgent:
         self.model = genai.GenerativeModel(
             model_name='gemini-2.0-flash-thinking-exp-01-21',
             generation_config={
-                "temperature": 0.25,
+                "temperature": 0.4,
                 "top_p": 1,
                 "top_k": 40,
                 "max_output_tokens": 65536,
@@ -41,19 +49,27 @@ class ChatAgent:
         #     }
         # )
 
-        # 初始化知识库和对话历史
-        self.vectorstore = load_pdfs(pdf_dir)
+        # 初始化或加载知识库
+        collection_name = "medical_knowledge_base"
+        if utility.has_collection(collection_name):
+            # 如果集合已存在，直接加载
+            self.vectorstore = Collection(collection_name)
+            self.vectorstore.load()
+        else:
+            # 如果集合不存在，创建并加载PDF文件
+            self.vectorstore = init_milvus_collection()
+            
+        # 尝试加载PDF文件
+        vectorstore = load_pdfs(pdf_dir)
+        if (vectorstore is not None):
+            self.vectorstore = vectorstore
+
         self.chat_history = []
         self.max_history = 10
 
         # 初始化embedding模型
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.embeddings = HuggingFaceEmbeddings(
-            model_name="TencentBAC/Conan-embedding-v1",
-            model_kwargs={'device': device},
-            encode_kwargs={'normalize_embeddings': True},
-            cache_folder="./embeddings_cache"
-        )
+        from embedding_model import embedding_model
+        self.embeddings = embedding_model
 
     def chat(self, query):
         try:
@@ -159,3 +175,32 @@ class ChatAgent:
         final_score = sum(score * weights[metric] for metric, score in indicators.items())
         
         return min(1.0, final_score)
+    
+    def update_knowledge_base(self, pdf_dir):
+        """更新知识库"""
+        from utils.pdf_loader import load_pdf, get_pdf_files
+        from pymilvus import utility, Collection
+
+        current_files = get_pdf_files(pdf_dir)
+        if not current_files:
+            print(f"警告: {pdf_dir} 目录下没有找到PDF文件")
+            return
+
+        processed_files = set()
+        collection_name = "medical_knowledge_base"  # 假设集合名称是固定的
+        if utility.has_collection(collection_name):
+            collection = Collection(collection_name)
+            collection.load()
+            for entity in collection.query(expr='id >= 0', output_fields=['source']):
+                processed_files.add(entity['source'])
+
+        new_files = current_files - processed_files
+
+        if new_files:
+            print("检测到新增PDF文件，进行增量更新...")
+            for file in new_files:
+                pdf_path = os.path.join(pdf_dir, file)
+                load_pdf(pdf_path, self.vectorstore, self.embeddings)
+            print("知识库已更新")
+        else:
+            print("未检测到新增PDF文件")

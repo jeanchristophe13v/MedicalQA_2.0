@@ -65,11 +65,11 @@ class AdaptiveMedicalSplitter:
         """根据文本统计信息获取最佳块大小"""
         # 调整 chunk_size 和 chunk_overlap
         if stats.term_density > 0.05:
-            chunk_size = 700  # 调整为 700 个词
-            chunk_overlap = 200 # 调整为 200 个词
+            chunk_size = 850  # 调整为 700 个词
+            chunk_overlap = 230 # 调整为 200 个词
         else:
-            chunk_size = 500  # 调整为 500 个词
-            chunk_overlap = 150  # 调整为 150 个词
+            chunk_size = 600  # 调整为 500 个词
+            chunk_overlap = 180  # 调整为 150 个词
 
         return {
             "chunk_size": chunk_size,

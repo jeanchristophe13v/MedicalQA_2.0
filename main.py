@@ -98,10 +98,12 @@ def main():
         
         start_loading()
         try:
+            start_loading()
             agent = ChatAgent("data")
         finally:
             stop_loading()
-            
+            # agent.update_knowledge_base("data")  # 首次加载后更新知识库
+
         while True:
             query = input("\n请输入问题: ").strip()
             if query.lower() in ['q', 'quit', 'exit']:
@@ -110,15 +112,22 @@ def main():
                 os.system('cls' if os.name == 'nt' else 'clear')
                 print_welcome()
                 continue
-                
+            elif query.lower() == 'update':  # 添加 update 命令
+                start_loading()
+                try:
+                    agent.update_knowledge_base("data")
+                finally:
+                    stop_loading()
+                continue
+
             if not query:
                 continue
-                
+
             animate_generating.running = True
             thread = threading.Thread(target=animate_generating)
             thread.daemon = True
             thread.start()
-            
+
             try:
                 for response in agent.chat(query):
                     stop_generating_animation()
@@ -128,7 +137,7 @@ def main():
             except Exception as e:
                 stop_generating_animation()
                 print(f"\n错误: {str(e)}")
-                
+
     except Exception as e:
         print(f"\n程序初始化失败: {str(e)}")
     finally:
