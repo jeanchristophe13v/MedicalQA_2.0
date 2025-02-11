@@ -1,22 +1,27 @@
 from dotenv import load_dotenv
-import google.generativeai as genai
 import os
-import jieba
 import re
-import logging
-from typing import List, Dict, Any
-from langchain.memory import ConversationBufferMemory
-from utils.pdf_loader import load_pdfs, init_milvus_collection
-from langchain_huggingface import HuggingFaceEmbeddings
-import torch
-from pymilvus import Collection, utility, connections
+import jieba
 
+# 初始化环境变量
 load_dotenv()
-jieba.setLogLevel(logging.WARNING)
 
 class ChatAgent:
-    def __init__(self, pdf_dir):
-        # 首先确保 Milvus 连接已建立
+    def __init__(self, pdf_dir, specific_files=None):
+        # 延迟导入其他模块
+        from main import print_with_loading_clear
+        print_with_loading_clear("正在加载必要组件...")
+        
+        import google.generativeai as genai
+        import jieba
+        from pymilvus import connections, Collection, utility
+        from utils.pdf_loader import load_pdfs
+        from embedding_model import embedding_model
+        
+        # 设置日志级别
+        import logging
+        jieba.setLogLevel(logging.WARNING)
+        
         try:
             connections.connect("default", host="localhost", port="19530")
         except Exception as e:
@@ -50,58 +55,58 @@ class ChatAgent:
         # )
 
         # 初始化或加载知识库
-        collection_name = "medical_knowledge_base"
-        if utility.has_collection(collection_name):
-            # 如果集合已存在，直接加载
-            self.vectorstore = Collection(collection_name)
-            self.vectorstore.load()
-        else:
-            # 如果集合不存在，创建并加载PDF文件
-            self.vectorstore = init_milvus_collection()
+        self.collections = {}
+        self.pdf_dir = pdf_dir
+        
+        # 加载PDF文件
+        self.collections = load_pdfs(pdf_dir, specific_files)
+        if not self.collections:
+            print("警告: 未能加载任何PDF文件")
             
-        # 尝试加载PDF文件
-        vectorstore = load_pdfs(pdf_dir)
-        if (vectorstore is not None):
-            self.vectorstore = vectorstore
-
+        # 初始化embedding模型
+        self.embeddings = embedding_model
+        
         self.chat_history = []
         self.max_history = 10
 
-        # 初始化embedding模型
-        from embedding_model import embedding_model
-        self.embeddings = embedding_model
-
     def chat(self, query):
         try:
-            # 使用Milvus进行搜索
             search_params = {
                 "metric_type": "L2",
                 "params": {"nprobe": 16}
             }
-            # 先将query转换为embedding向量
+            
+            # 在所有加载的collections中搜索
+            all_results = []
             query_embedding = self.embeddings.embed_query(query)
-            results = self.vectorstore.search(
-                [query_embedding], "embedding", search_params, limit=12, output_fields=["source", "chunk_index", "chunk_total", "chunk_size", "chunk_overlap", "content"]
-            )
+            
+            for filename, collection in self.collections.items():
+                results = collection.search(
+                    [query_embedding], 
+                    "embedding",
+                    search_params,
+                    limit=4,  # 每个文件取前4个最相关的结果
+                    output_fields=["chunk_index", "chunk_total", "content"]
+                )
+                
+                for hits in results:
+                    for hit in hits:
+                        doc = {
+                            'page_content': hit.get('content'),
+                            'metadata': {
+                                'source': filename,
+                                'chunk_index': hit.get('chunk_index'),
+                                'chunk_total': hit.get('chunk_total'),
+                                'score': hit.score  # 添加相似度分数
+                            }
+                        }
+                        all_results.append(doc)
+            
+            # 根据相似度分数排序,取最相关的内容
+            all_results.sort(key=lambda x: x['metadata']['score'])
+            filtered_docs = all_results[:12]  # 取总体最相关的12个结果
 
             # Milvus返回的结果处理
-            filtered_docs = []
-            for hits in results:  # results 的第一个元素是 Hits 对象
-                for hit in hits:
-                    doc = {
-                        'page_content': hit.get('content'),
-                        'metadata': {
-                            'source': hit.get('source'),
-                            'chunk_index': hit.get('chunk_index'),
-                            'chunk_total': hit.get('chunk_total'),
-                            'chunk_size': hit.get('chunk_size'),
-                            'chunk_overlap': hit.get('chunk_overlap')
-                        }
-                    }
-                    filtered_docs.append(doc)
-
-            
-            # 动态上下文管理
             context = ""
             current_length = 0
             max_length = min(8000, 3000 + len(query) * 10)

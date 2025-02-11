@@ -1,41 +1,56 @@
-from chat_agent import ChatAgent
 import sys
 import time
 import threading
-import itertools
-from colorama import init, Fore, Style  # 添加颜色支持
 import os
-import random
+from colorama import init, Fore, Style  # 仅保留必要的初始导入
 
 # 初始化颜色支持匹配
 init()
 
-def loading_animation():
-    """加载动画"""
-    # 更丰富的加载动画帧
-    frames = [
-        "🤔 Loading... ",
-        "💭 Loading... ",
-        "💡 Loading... ",
-        "✨ Loading... "
-    ]
-    dots = ["", ".", "..", "..."]
-    i = 0
-    while loading_animation.running:
-        frame = frames[i % len(frames)]
-        dot = dots[i % len(dots)]
-        sys.stdout.write('\r' + Fore.BLUE + frame + dot + Style.RESET_ALL)
-        sys.stdout.flush()
-        time.sleep(0.3)
-        i += 1
+class LoadingAnimation:
+    def __init__(self):
+        self.running = False
+        self.thread = None
 
-def start_loading():
-    loading_animation.running = True
-    threading.Thread(target=loading_animation).start()
+    def start(self):
+        """开始加载动画"""
+        self.running = True
+        self.thread = threading.Thread(target=self._animate)
+        self.thread.daemon = True
+        self.thread.start()
 
-def stop_loading():
-    loading_animation.running = False
-    sys.stdout.write('\r' + ' ' * 20 + '\r')  # 清除加载动画
+    def stop(self):
+        """停止加载动画"""
+        if self.running:
+            self.running = False
+            if self.thread:
+                self.thread.join(timeout=0.2)
+            # 清除动画
+            sys.stdout.write('\r' + ' ' * 30 + '\r')
+            sys.stdout.flush()
+
+    def _animate(self):
+        """加载动画实现"""
+        dots = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+        i = 0
+        while self.running:
+            sys.stdout.write('\r' + dots[i % len(dots)] + ' Loading...')
+            sys.stdout.flush()
+            time.sleep(0.1)
+            i += 1
+
+# 创建全局loading动画实例
+loading_animation = LoadingAnimation()
+
+def clear_loading_line():
+    """清除loading残留的文本"""
+    sys.stdout.write('\r' + ' ' * 30 + '\r')
+    sys.stdout.flush()
+
+def print_with_loading_clear(text):
+    """打印文本前先清除loading残留，不自动重启动画"""
+    clear_loading_line()
+    print(text)
 
 def stream_output(text):
     """直接输出完整文本"""
@@ -54,7 +69,7 @@ def print_welcome():
 
 def animate_generating():
     """生成动画"""
-    frames = ["⋮", "⋯", "⋰", "⋱"]
+    frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
     i = 0
     message = "思考中"
     
@@ -92,17 +107,25 @@ def stop_generating_animation():
     sys.stdout.flush()
 
 def main():
+    # 立即显示欢迎信息
+    print_welcome()
+    
+    specific_files = sys.argv[1:] if len(sys.argv) > 1 else None
+    
     try:
-        print_welcome()
-        agent = None
+        # 延迟导入ChatAgent，这样不会阻塞欢迎信息的显示
+        from chat_agent import ChatAgent
         
-        start_loading()
+        if specific_files:
+            print_with_loading_clear(f"准备加载指定的PDF文件: {', '.join(specific_files)}")
+        else:
+            print_with_loading_clear("准备加载data文件夹中的所有PDF文件")
+        
+        loading_animation.start()
         try:
-            start_loading()
-            agent = ChatAgent("data")
+            agent = ChatAgent("data", specific_files)
         finally:
-            stop_loading()
-            # agent.update_knowledge_base("data")  # 首次加载后更新知识库
+            loading_animation.stop()
 
         while True:
             query = input("\n请输入问题: ").strip()
@@ -113,11 +136,11 @@ def main():
                 print_welcome()
                 continue
             elif query.lower() == 'update':  # 添加 update 命令
-                start_loading()
+                loading_animation.start()
                 try:
                     agent.update_knowledge_base("data")
                 finally:
-                    stop_loading()
+                    loading_animation.stop()
                 continue
 
             if not query:
