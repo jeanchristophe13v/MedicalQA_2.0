@@ -17,7 +17,7 @@ def get_pdf_files(pdf_dir: str, specific_files: List[str] = None) -> Set[str]:
             if file in existing_files:
                 valid_files.add(file)
             else:
-                print(f"警告: 文件 '{file}' 在 {pdf_dir} 目录中未找到")
+                print(f"警告: 文件 '[{file}]' 在 {pdf_dir} 目录中未找到")
         return valid_files
     else:
         return {f for f in os.listdir(pdf_dir) if f.endswith('.pdf')}
@@ -99,7 +99,7 @@ def load_pdf(pdf_path: str, embeddings) -> Collection:
     filename = os.path.basename(pdf_path)
     collection_name = get_collection_name(filename)
     
-    print_step(f"\n开始处理文档: {filename}")
+    print_step(f"\n开始处理文档: [{filename}]")
     splitter = AdaptiveMedicalSplitter()
     loader = PyPDFLoader(pdf_path)
     raw_docs = loader.load()
@@ -146,9 +146,11 @@ def load_pdfs(pdf_dir: str, specific_files: List[str] = None) -> Dict[str, Colle
     embeddings = embedding_model
     print_step("   ✓ 模型加载完成")
 
-    print_step("\n2. 连接Milvus数据库")
+    print_step("\n2. 连接Milvus向量数据库")
     connections.connect("default", host="localhost", port="19530")
-    print_step("   ✓ 数据库连接成功")
+    from main import clear_loading_line
+    clear_loading_line()  # 清除连接过程中残留的loading文本
+    print_step("   ✓ 向量数据库连接成功")
     
     # 获取需要处理的文件
     current_files = get_pdf_files(pdf_dir, specific_files)
@@ -156,33 +158,13 @@ def load_pdfs(pdf_dir: str, specific_files: List[str] = None) -> Dict[str, Colle
         print_step(f"\n警告: 没有找到要处理的PDF文件")
         return {}
 
+    # 在扫描阶段开始前先清除loading残留
+    from main import clear_loading_line
+    clear_loading_line()
     print_step("\n3. 扫描PDF文件和向量库")
     # 获取所有collection名称
     existing_collections = {}
     new_files = set()
-    collections_to_delete = set()
-    
-    # 获取所有已存在的collections
-    all_collections = utility.list_collections()
-    
-    # 检查每个数据库中的collection
-    for collection_name in all_collections:
-        if collection_name.startswith("medical_kb_"):
-            # 尝试从collection名称反推文件名
-            # 这里需要添加一个新函数来实现这个功能
-            original_filename = get_original_filename(collection_name)
-            if original_filename:
-                # 如果文件不在当前目录中，加入待删除列表
-                if original_filename not in current_files:
-                    collections_to_delete.add(collection_name)
-                    print_step(f"   ! 发现孤立向量库: {original_filename}")
-    
-    # 删除不存在文件对应的collections
-    if collections_to_delete:
-        print_step("\n清理孤立向量库中")
-        for collection_name in collections_to_delete:
-            utility.drop_collection(collection_name)
-            print_step(f"   ✓ 已删除: {collection_name}")
     
     # 处理当前文件
     print_step("\n4. 处理当前文件")
@@ -199,16 +181,19 @@ def load_pdfs(pdf_dir: str, specific_files: List[str] = None) -> Dict[str, Colle
         print_step("   ✓ 所有文件已加载")
     else:
         for file in new_files:
-            print_step(f"   → 待处理: {file}")
+            print_step(f"   → 待处理: [{file}]")
     
     # 处理新文件
     if new_files:
-        print_step("\n5. 处理新文件")
+        # print_step("\n5. 处理新文件")
         for file in new_files:
             pdf_path = os.path.join(pdf_dir, file)
-            print_step(f"\n处理文件: {file}")
+            # print_step(f"\n5. 处理文件: {file}")
             collection = load_pdf(pdf_path, embeddings)
             existing_collections[file] = collection
+            # 在打印完成提示前清除残留的loading文本
+            from main import clear_loading_line
+            clear_loading_line()
             print_step(f"   ✓ 向量化完成")
     
     print_step("\n" + "="*50 +"\n")

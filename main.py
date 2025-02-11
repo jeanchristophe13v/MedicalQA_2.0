@@ -117,7 +117,7 @@ def main():
         from chat_agent import ChatAgent
         
         if specific_files:
-            print_with_loading_clear(f"准备加载指定的PDF文件: {', '.join(specific_files)}")
+            print_with_loading_clear(f"准备加载指定的PDF文件: [{', '.join(specific_files)}]")
         else:
             print_with_loading_clear("准备加载data文件夹中的所有PDF文件")
         
