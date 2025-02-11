@@ -106,7 +106,7 @@
     ```bash
     venv2/Scripts/python main.py 指定文件.pdf
     ```
-    > e.g. python main.py 药理学.pdf
+    > e.g. python main.py 药理学.pdf 外科学.pdf
     
 3.  **与程序交互**:
 
