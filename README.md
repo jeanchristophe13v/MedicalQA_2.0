@@ -97,17 +97,18 @@
 
     确保您已经激活了`venv2`虚拟环境，然后在项目根目录下执行以下命令：
 
-    1. `python main.py`默认加载data文件夹中的所有pdf文件
+    1. **默认加载data文件夹中的所有pdf文件**
     ```bash
     venv2/Scripts/python main.py
     ```
 
-    2. `python main.py [指定文件.pdf]`可以加载指定pdf文件
+    2. **加载指定pdf文件**
     ```bash
-    venv2/Scripts/python main.py [指定文件.pdf]
+    venv2/Scripts/python main.py 指定文件.pdf
     ```
-
-2.  **与程序交互**:
+    > e.g. python main.py 药理学.pdf
+    
+3.  **与程序交互**:
 
     *   程序启动后，会打印欢迎信息和加载提示。
     *   首次运行或`data`目录下有新的PDF文件时，程序会自动处理PDF文件，构建或更新Milvus向量数据库。这可能需要一些时间，请耐心等待。
